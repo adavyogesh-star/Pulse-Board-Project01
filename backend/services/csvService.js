@@ -22,4 +22,29 @@ function loadCSV() {
     return result.data;
 }
 
-module.exports = { loadCSV };
+function filterRowsByApplication(rows, application) {
+    if (!application || application === "All") {
+        return rows;
+    }
+
+    return rows.filter((row) => (row.Application || "Unknown") === application);
+}
+
+function filterRowsByTimeRange(rows, timeRange) {
+    const dayCount = {
+        "Last 24 Hours": 1,
+        "Last 7 Days": 7,
+        "Last 30 Days": 30,
+    }[timeRange] || 30;
+
+    if (!dayCount || rows.length === 0) {
+        return rows;
+    }
+
+    const totalRows = rows.length;
+    const limit = Math.max(1, Math.floor(totalRows * (dayCount / 30)));
+
+    return rows.slice(0, limit);
+}
+
+module.exports = { loadCSV, filterRowsByApplication, filterRowsByTimeRange };
