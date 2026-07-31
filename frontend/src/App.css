@@ -11,7 +11,7 @@
   padding: 1.25rem 2rem;
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(14px);
-  border-bottom: 1px solid #dce7ff;
+  border-bottom: 1px solid #171718;
 }
 
 .navbar-links {
@@ -235,7 +235,7 @@
 }
 
 .legend-item.active {
-  background: #f1f6ff;
+  background: #025afe;
 }
 
 .legend-row {
@@ -243,7 +243,7 @@
   justify-content: center;
   gap: 1rem;
   margin-top: 0.7rem;
-  color: #51607d;
+  color: #0653ee;
   font-size: 0.9rem;
   flex-wrap: wrap;
 }
@@ -280,7 +280,7 @@
 
 .axis-label {
   font-size: 0.7rem;
-  fill: #6b7a93;
+  fill: #1058d5;
 }
 
 .chart-tooltip-panel {
