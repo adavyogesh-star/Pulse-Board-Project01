@@ -9,6 +9,9 @@ import PerformanceChart from './components/PerformanceChart'
 import StatusPieChart from './components/StatusPieChart'
 import BarChart from './components/BarChart'
 
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://pulse-board-project01-1.onrender.com'
+const buildApiUrl = (path) => `${apiBaseUrl}${path}`
+
 const KPI_CONFIG = [
   {
     key: 'totalApplications',
@@ -140,7 +143,7 @@ function App() {
         setStatusMessage('')
 
         const response = await fetch(
-          `/api/overview?application=${encodeURIComponent(selectedApplication)}&region=${encodeURIComponent(selectedRegion)}&timeRange=${encodeURIComponent(selectedTimeRange)}`
+          buildApiUrl(`/api/overview?application=${encodeURIComponent(selectedApplication)}&region=${encodeURIComponent(selectedRegion)}&timeRange=${encodeURIComponent(selectedTimeRange)}`)
         )
 
         if (!response.ok) {
