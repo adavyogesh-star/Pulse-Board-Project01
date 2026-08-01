@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "build": "npm --prefix frontend ci && npm --prefix frontend run build"
+  },
   "dependencies": {
     "csv-parser": "^3.2.1",
     "lucide-react": "^1.22.0",
