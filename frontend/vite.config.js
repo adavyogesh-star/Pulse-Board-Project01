@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'https://pulse-board-project01-1.onrender.com',
         changeOrigin: true,
       },
     },
