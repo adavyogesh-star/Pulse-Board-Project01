@@ -38,6 +38,16 @@ function PerformanceChart({ data = [], timeSeries = [] }) {
     }).join(' ')
   }
 
+  const buildAreaPath = (key) => {
+    if (!timeSeries.length) {
+      return ''
+    }
+
+    const linePath = buildPath(key)
+    const baseline = `L ${padding + stepX * (timeSeries.length - 1)} ${padding + innerHeight} L ${padding} ${padding + innerHeight} Z`
+    return `${linePath} ${baseline}`
+  }
+
   const chartPoints = timeSeries.map((point, index) => ({
     label: point.label,
     x: padding + stepX * index,
@@ -67,6 +77,19 @@ function PerformanceChart({ data = [], timeSeries = [] }) {
               stroke="#e6ebf6"
               strokeDasharray="4 4"
             />
+          ))}
+
+          <defs>
+            {seriesConfig.map((series) => (
+              <linearGradient key={`${series.key}-gradient`} id={`${series.key}-gradient`} x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor={series.color} stopOpacity="0.35" />
+                <stop offset="100%" stopColor={series.color} stopOpacity="0.03" />
+              </linearGradient>
+            ))}
+          </defs>
+
+          {seriesConfig.map((series) => (
+            <path key={`${series.key}-area`} d={buildAreaPath(series.key)} fill={`url(#${series.key}-gradient)`} />
           ))}
 
           {seriesConfig.map((series) => (

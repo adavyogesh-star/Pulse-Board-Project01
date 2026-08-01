@@ -38,7 +38,10 @@ function generateAlerts(metrics, health) {
         alerts.push({
             severity: health.errorStatus,
             metric: "Error Rate",
-            message: "Error rate has exceeded the acceptable threshold."
+            message: "Error rate has exceeded the acceptable threshold.",
+            firstSeen: Date.now() - 1000 * 60 * 5,
+            lastSeen: Date.now(),
+            count: Math.max(1, Math.floor((metrics.averageErrorRate || 1) * 3))
         });
     }
 

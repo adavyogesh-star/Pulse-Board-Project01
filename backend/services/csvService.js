@@ -30,6 +30,46 @@ function filterRowsByApplication(rows, application) {
     return rows.filter((row) => (row.Application || "Unknown") === application);
 }
 
+function filterRowsByRegion(rows, region) {
+    if (!region || region === "All") {
+        return rows;
+    }
+
+    return rows.filter((row) => (row.Region || "Unknown") === region);
+}
+
+function filterRowsByEnvironment(rows, environment) {
+    if (!environment || environment === "All") {
+        return rows;
+    }
+
+    return rows.filter((row) => (row.Environment || "Unknown") === environment);
+}
+
+function filterRowsBySeverity(rows, severity) {
+    if (!severity || severity === "All") {
+        return rows;
+    }
+
+    return rows.filter((row) => (row.Severity || "Unknown") === severity);
+}
+
+function filterRowsByEvent(rows, event) {
+    if (!event || event === "All") {
+        return rows;
+    }
+
+    return rows.filter((row) => (row.Event || "Unknown") === event);
+}
+
+function filterRowsByHealthStatus(rows, healthStatus) {
+    if (!healthStatus || healthStatus === "All") {
+        return rows;
+    }
+
+    return rows.filter((row) => (row.Health_Status || "Unknown") === healthStatus);
+}
+
 function filterRowsByTimeRange(rows, timeRange) {
     const dayCount = {
         "Last 24 Hours": 1,
@@ -47,4 +87,13 @@ function filterRowsByTimeRange(rows, timeRange) {
     return rows.slice(0, limit);
 }
 
-module.exports = { loadCSV, filterRowsByApplication, filterRowsByTimeRange };
+module.exports = {
+    loadCSV,
+    filterRowsByApplication,
+    filterRowsByRegion,
+    filterRowsByEnvironment,
+    filterRowsBySeverity,
+    filterRowsByEvent,
+    filterRowsByHealthStatus,
+    filterRowsByTimeRange,
+};

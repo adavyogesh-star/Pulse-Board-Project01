@@ -18,14 +18,17 @@ function StatusPieChart({ data = [] }) {
     }
   }
 
-  const describeArc = (startAngle, endAngle, radius) => {
-    const start = polarToCartesian(0, 0, radius, endAngle)
-    const end = polarToCartesian(0, 0, radius, startAngle)
+  const describeDonutSegment = (startAngle, endAngle, outerRadius, innerRadius) => {
+    const startOuter = polarToCartesian(0, 0, outerRadius, endAngle)
+    const endOuter = polarToCartesian(0, 0, outerRadius, startAngle)
+    const startInner = polarToCartesian(0, 0, innerRadius, endAngle)
+    const endInner = polarToCartesian(0, 0, innerRadius, startAngle)
     const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1'
-    return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y} Z`
+    return `M ${startOuter.x} ${startOuter.y} A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 0 ${endOuter.x} ${endOuter.y} L ${endInner.x} ${endInner.y} A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 1 ${startInner.x} ${startInner.y} Z`
   }
 
   let startAngle = 0
+  const activeItem = data[activeIndex] || data[0]
 
   return (
     <div className="panel chart-panel">
@@ -40,7 +43,7 @@ function StatusPieChart({ data = [] }) {
             const value = Number(item.value || 0)
             const angle = total === 0 ? 0 : (value / total) * 360
             const endAngle = startAngle + angle
-            const path = describeArc(startAngle, endAngle, 78)
+            const path = describeDonutSegment(startAngle, endAngle, 78, 48)
             startAngle = endAngle
 
             return (
@@ -57,9 +60,10 @@ function StatusPieChart({ data = [] }) {
             )
           })}
 
-          <circle cx="0" cy="0" r="44" fill="#ffffff" />
-          <text x="0" y="-4" textAnchor="middle" className="pie-center-value">{total}</text>
-          <text x="0" y="16" textAnchor="middle" className="pie-center-label">services</text>
+          <circle cx="0" cy="0" r="48" fill="#ffffff" />
+          <text x="0" y="-6" textAnchor="middle" className="pie-center-value">{activeItem?.value || 0}</text>
+          <text x="0" y="12" textAnchor="middle" className="pie-center-label">{activeItem?.name || 'Healthy'}</text>
+          <text x="0" y="30" textAnchor="middle" className="pie-center-subtle">of {total} services</text>
         </svg>
 
         <div className="legend-list-wrapper">

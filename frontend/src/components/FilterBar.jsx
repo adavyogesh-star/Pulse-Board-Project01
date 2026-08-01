@@ -1,4 +1,13 @@
-function FilterBar({ applications, selectedApplication, selectedTimeRange, onApplicationChange, onTimeRangeChange }) {
+function FilterBar({
+  applications,
+  regions,
+  selectedApplication,
+  selectedRegion,
+  selectedTimeRange,
+  onApplicationChange,
+  onRegionChange,
+  onTimeRangeChange,
+}) {
   return (
     <section className="filter-bar panel">
       <div>
@@ -12,6 +21,22 @@ function FilterBar({ applications, selectedApplication, selectedTimeRange, onApp
           {applications.map((application) => (
             <option key={application} value={application}>
               {application}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor="region-filter">City</label>
+        <select
+          id="region-filter"
+          value={selectedRegion}
+          onChange={(event) => onRegionChange(event.target.value)}
+        >
+          <option value="All">All Cities</option>
+          {regions.map((region) => (
+            <option key={region} value={region}>
+              {region}
             </option>
           ))}
         </select>

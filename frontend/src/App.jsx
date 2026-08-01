@@ -7,6 +7,7 @@ import SummaryTable from './components/SummaryTable'
 import AlertTable from './components/AlertTable'
 import PerformanceChart from './components/PerformanceChart'
 import StatusPieChart from './components/StatusPieChart'
+import BarChart from './components/BarChart'
 
 const KPI_CONFIG = [
   {
@@ -117,7 +118,17 @@ function App() {
   const [error, setError] = useState('')
   const [statusMessage, setStatusMessage] = useState('')
   const [selectedApplication, setSelectedApplication] = useState('All')
+  const [selectedRegion, setSelectedRegion] = useState('All')
   const [selectedTimeRange, setSelectedTimeRange] = useState('Last 30 Days')
+  const [currentTime, setCurrentTime] = useState(new Date())
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+
+    return () => clearInterval(intervalId)
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -128,7 +139,9 @@ function App() {
         setError('')
         setStatusMessage('')
 
-        const response = await fetch(`/api/overview?application=${encodeURIComponent(selectedApplication)}&timeRange=${encodeURIComponent(selectedTimeRange)}`)
+        const response = await fetch(
+          `/api/overview?application=${encodeURIComponent(selectedApplication)}&region=${encodeURIComponent(selectedRegion)}&timeRange=${encodeURIComponent(selectedTimeRange)}`
+        )
 
         if (!response.ok) {
           throw new Error('Unable to load dashboard data')
@@ -158,7 +171,7 @@ function App() {
     return () => {
       isMounted = false
     }
-  }, [selectedApplication, selectedTimeRange])
+  }, [selectedApplication, selectedRegion, selectedTimeRange])
 
   const summaryRows = useMemo(() => {
     if (!data?.metrics || !data?.health) {
@@ -253,9 +266,12 @@ function App() {
       <main className="dashboard">
         <FilterBar
           applications={data?.applications || []}
+          regions={data?.regions || []}
           selectedApplication={selectedApplication}
+          selectedRegion={selectedRegion}
           selectedTimeRange={selectedTimeRange}
           onApplicationChange={setSelectedApplication}
+          onRegionChange={setSelectedRegion}
           onTimeRangeChange={setSelectedTimeRange}
         />
 
@@ -275,8 +291,39 @@ function App() {
             </div>
             <div>
               <span className="stat-label">Current Focus</span>
-              <strong>{selectedApplication}</strong>
+              <strong>
+                {selectedRegion !== 'All' && selectedApplication !== 'All'
+                  ? `${selectedApplication} • ${selectedRegion}`
+                  : selectedRegion !== 'All'
+                  ? selectedRegion
+                  : selectedApplication !== 'All'
+                  ? selectedApplication
+                  : 'All Applications'}
+              </strong>
             </div>
+            <div>
+              <span className="stat-label">Dashboard Timeframe</span>
+              <strong>{selectedTimeRange}</strong>
+              <p className="muted">Updated {currentTime.toLocaleTimeString()}</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="insight-strip">
+          <div className="insight-card">
+            <span>Availability</span>
+            <strong>{data?.metrics?.averageAvailability?.toFixed(2) ?? '—'}%</strong>
+            <p>{data?.health?.availabilityStatus || 'Healthy'} delivery across services</p>
+          </div>
+          <div className="insight-card">
+            <span>Latency</span>
+            <strong>{data?.metrics?.averageResponseTime ?? '—'} ms</strong>
+            <p>{data?.health?.responseStatus || 'Healthy'} response profile</p>
+          </div>
+          <div className="insight-card">
+            <span>Critical Alerts</span>
+            <strong>{data?.alerts?.filter((alert) => alert.severity === 'Critical').length ?? 0}</strong>
+            <p>Critical incidents requiring immediate action</p>
           </div>
         </section>
 
@@ -297,9 +344,9 @@ function App() {
             ))}
         </section>
 
-        <section className="chart-grid">
+        <section className="chart-grid two-up">
           <PerformanceChart data={chartData} timeSeries={timeSeriesData} />
-          <StatusPieChart data={healthChartData} />
+          <BarChart data={chartData} />
         </section>
 
         <section className="content-grid">

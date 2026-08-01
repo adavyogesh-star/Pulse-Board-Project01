@@ -1,6 +1,15 @@
 const express = require("express");
 const cors = require("cors");
-const { loadCSV, filterRowsByApplication, filterRowsByTimeRange } = require("./services/csvService");
+const {
+    loadCSV,
+    filterRowsByApplication,
+    filterRowsByRegion,
+    filterRowsByEnvironment,
+    filterRowsBySeverity,
+    filterRowsByEvent,
+    filterRowsByHealthStatus,
+    filterRowsByTimeRange,
+} = require("./services/csvService");
 const { calculateMetrics, calculateApplicationMetrics, calculateTimeSeries } = require("./services/metricsService");
 const { calculateHealth } = require("./services/healthService");
 const { generateAlerts } = require("./services/alertService");
@@ -20,13 +29,30 @@ app.get("/", (req, res) => {
 app.get("/api/overview", (req, res) => {
     try {
         const application = req.query.application || "All";
+        const region = req.query.region || "All";
+        const environment = req.query.environment || "All";
+        const severity = req.query.severity || "All";
+        const event = req.query.event || "All";
+        const healthStatus = req.query.healthStatus || "All";
         const timeRange = req.query.timeRange || "Last 30 Days";
         const rows = loadCSV();
-        const filteredRows = filterRowsByTimeRange(filterRowsByApplication(rows, application), timeRange);
+        const regions = [...new Set(rows.map((row) => row.Region || "Unknown"))].sort();
+        const applications = [...new Set(rows.map((row) => row.Application || "Unknown"))].sort();
+        const environments = [...new Set(rows.map((row) => row.Environment || "Unknown"))].sort();
+        const severities = [...new Set(rows.map((row) => row.Severity || "Unknown"))].sort();
+        const events = [...new Set(rows.map((row) => row.Event || "Unknown"))].sort();
+        const healthStatuses = [...new Set(rows.map((row) => row.Health_Status || "Unknown"))].sort();
+        let filteredRows = rows;
+        filteredRows = filterRowsByApplication(filteredRows, application);
+        filteredRows = filterRowsByRegion(filteredRows, region);
+        filteredRows = filterRowsByEnvironment(filteredRows, environment);
+        filteredRows = filterRowsBySeverity(filteredRows, severity);
+        filteredRows = filterRowsByEvent(filteredRows, event);
+        filteredRows = filterRowsByHealthStatus(filteredRows, healthStatus);
+        filteredRows = filterRowsByTimeRange(filteredRows, timeRange);
         const metrics = calculateMetrics(filteredRows);
         const health = calculateHealth(metrics);
         const alerts = generateAlerts(metrics, health);
-        const applications = [...new Set(rows.map((row) => row.Application || "Unknown"))];
         const applicationMetrics = calculateApplicationMetrics(filteredRows);
         const timeSeries = calculateTimeSeries(filteredRows);
         const healthBreakdown = applicationMetrics.reduce((accumulator, applicationMetric) => {
@@ -40,6 +66,11 @@ app.get("/api/overview", (req, res) => {
             health,
             alerts,
             applications,
+            regions,
+            environments,
+            severities,
+            events,
+            healthStatuses,
             applicationMetrics,
             timeSeries,
             healthBreakdown,
@@ -60,7 +91,11 @@ app.get("/api/alerts", (req, res) => {
         const rows = loadCSV();
         const metrics = calculateMetrics(rows);
         const health = calculateHealth(metrics);
-        const alerts = generateAlerts(metrics, health);
+        const alerts = generateAlerts(metrics, health).map((a) => ({
+            ...a,
+            firstSeenISO: new Date(a.firstSeen || Date.now()).toISOString(),
+            lastSeenISO: new Date(a.lastSeen || Date.now()).toISOString()
+        }));
 
         res.json(alerts);
     } catch (error) {

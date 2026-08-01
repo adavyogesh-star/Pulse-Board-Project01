@@ -6,29 +6,28 @@ function AlertTable({ alerts }) {
         <p>Current incidents and threshold breaches</p>
       </div>
 
-      {alerts.length === 0 ? (
+      {(!alerts || alerts.length === 0) ? (
         <p className="empty-state">No alerts at the moment.</p>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Severity</th>
-              <th>Metric</th>
-              <th>Message</th>
-            </tr>
-          </thead>
-          <tbody>
-            {alerts.map((alert, index) => (
-              <tr key={`${alert.metric}-${index}`}>
-                <td>
-                  <span className={`status-pill ${alert.severity?.toLowerCase()}`}>{alert.severity}</span>
-                </td>
-                <td>{alert.metric}</td>
-                <td>{alert.message}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="alerts-list">
+          {alerts.map((alert, index) => (
+            <div key={`${alert.metric}-${index}`} className="alert-row panel">
+              <div style={{display: 'flex', gap: 12, alignItems: 'center'}}>
+                <span className={`status-pill ${alert.severity?.toLowerCase()}`}>{alert.severity}</span>
+                <div>
+                  <strong>{alert.metric}</strong>
+                  <div className="muted" style={{marginTop: 6}}>{alert.message}</div>
+                </div>
+              </div>
+
+              <div style={{display: 'flex', gap: 18, alignItems: 'center'}}>
+                <div className="muted">{new Date(alert.firstSeenISO || Date.now()).toLocaleString()}</div>
+                <div className="muted">{new Date(alert.lastSeenISO || Date.now()).toLocaleString()}</div>
+                <div><strong>{alert.count || 1}</strong></div>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </section>
   )
