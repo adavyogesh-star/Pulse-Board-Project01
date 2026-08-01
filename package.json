@@ -1,4 +1,9 @@
 {
+  "private": true,
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "dev": "cd frontend && npm install && npm run dev"
+  },
   "dependencies": {
     "csv-parser": "^3.2.1",
     "lucide-react": "^1.22.0",
