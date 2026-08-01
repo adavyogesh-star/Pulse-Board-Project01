@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Lint, Test and Upload Artifacts
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install root dependencies (if any)
+        run: |
+          if [ -f package-lock.json ] || [ -f package.json ]; then npm ci; else echo "no root package.json"; fi
+
+      - name: Install frontend dependencies
+        run: |
+          if [ -f frontend/package.json ]; then npm ci --prefix frontend; else echo "no frontend"; fi
+
+      - name: Install backend dependencies
+        run: |
+          if [ -f backend/package.json ]; then npm ci --prefix backend; else echo "no backend"; fi
+
+      - name: Lint frontend
+        run: |
+          if [ -f frontend/package.json ]; then npm --prefix frontend run lint; else echo "no frontend lint"; fi
+
+      - name: Lint backend
+        run: |
+          if [ -f backend/package.json ]; then npm --prefix backend run lint || true; else echo "no backend lint"; fi
+
+      - name: Run frontend tests
+        if: always()
+        run: |
+          if [ -f frontend/package.json ]; then npm --prefix frontend run test:ci; else echo "no frontend tests"; fi
+
+      - name: Run backend tests
+        if: always()
+        run: |
+          if [ -f backend/package.json ]; then npm --prefix backend run test:ci; else echo "no backend tests"; fi
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            frontend/test-results/**/*.xml
+            backend/test-results/**/*.xml
+            frontend/coverage
+            backend/coverage

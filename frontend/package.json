@@ -7,7 +7,13 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "echo \"No tests configured yet\" && exit 0",
+    "test:ci": "cross-env CI=true npx jest --runInBand --reporters=default --reporters=jest-junit --coverage --coverageDirectory=coverage"
+  },
+  "jest-junit": {
+    "output": "frontend/test-results/junit.xml",
+    "suiteName": "frontend-tests"
   },
   "dependencies": {
     "react": "^19.2.7",

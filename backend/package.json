@@ -4,7 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:ci": "cross-env NODE_ENV=test npx jest --runInBand --reporters=default --reporters=jest-junit --coverage --coverageDirectory=coverage",
+    "lint": "eslint . --ext .js"
+  },
+  "jest-junit": {
+    "output": "backend/test-results/junit.xml",
+    "suiteName": "backend-tests"
   },
   "keywords": [],
   "author": "",
