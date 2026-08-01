@@ -23,15 +23,15 @@ jobs:
 
       - name: Install root dependencies (if any)
         run: |
-          if [ -f package-lock.json ] || [ -f package.json ]; then npm ci; else echo "no root package.json"; fi
+          if [ -f package.json ]; then npm install; else echo "no root package.json"; fi
 
       - name: Install frontend dependencies
         run: |
-          if [ -f frontend/package.json ]; then npm ci --prefix frontend; else echo "no frontend"; fi
+          if [ -f frontend/package.json ]; then npm install --prefix frontend; else echo "no frontend"; fi
 
       - name: Install backend dependencies
         run: |
-          if [ -f backend/package.json ]; then npm ci --prefix backend; else echo "no backend"; fi
+          if [ -f backend/package.json ]; then npm install --prefix backend; else echo "no backend"; fi
 
       - name: Lint frontend
         run: |
