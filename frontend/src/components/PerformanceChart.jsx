@@ -48,8 +48,19 @@ function PerformanceChart({ data = [], timeSeries = [] }) {
     return `${linePath} ${baseline}`
   }
 
+  const formatTimestamp = (iso) => {
+    if (!iso) return ''
+    try {
+      const d = new Date(iso)
+      return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    } catch (e) {
+      return iso
+    }
+  }
+
   const chartPoints = timeSeries.map((point, index) => ({
-    label: point.label,
+    label: point.timestampISO ? formatTimestamp(point.timestampISO) : point.label,
+    timestampISO: point.timestampISO || null,
     x: padding + stepX * index,
     values: {
       response: Number(point.response) || 0,
@@ -134,6 +145,7 @@ function PerformanceChart({ data = [], timeSeries = [] }) {
         {hoveredPoint ? (
           <>
             <strong>{hoveredPoint.label}</strong>
+            {hoveredPoint.timestampISO && <small>{formatTimestamp(hoveredPoint.timestampISO)}</small>}
             <span>Response {hoveredPoint.values.response}ms</span>
             <span>CPU {hoveredPoint.values.cpu}%</span>
             <span>Memory {hoveredPoint.values.memory}%</span>

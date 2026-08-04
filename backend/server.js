@@ -12,7 +12,7 @@ const {
 } = require("./services/csvService");
 const { calculateMetrics, calculateApplicationMetrics, calculateTimeSeries } = require("./services/metricsService");
 const { calculateHealth } = require("./services/healthService");
-const { generateAlerts } = require("./services/alertService");
+const { generateAlerts, generateRowAlerts } = require("./services/alertService");
 
 const app = express();
 
@@ -22,7 +22,7 @@ app.use(express.json());
 app.get("/", (req, res) => {
     res.json({
         project: "Pulse Board",
-        status: "Backend Running"
+        status: "Backend Running",
     });
 });
 
@@ -52,7 +52,23 @@ app.get("/api/overview", (req, res) => {
         filteredRows = filterRowsByTimeRange(filteredRows, timeRange);
         const metrics = calculateMetrics(filteredRows);
         const health = calculateHealth(metrics);
-        const alerts = generateAlerts(metrics, health);
+        const latestCsvTimestamp = filteredRows.reduce((latest, row) => {
+            if (!row.timestamp) {
+                return latest;
+            }
+            return !latest || row.timestamp > latest ? row.timestamp : latest;
+        }, null);
+        const rowAlerts = generateRowAlerts(filteredRows).map((alert) => ({
+            ...alert,
+            firstSeenISO: alert.firstSeen ? new Date(alert.firstSeen).toISOString() : null,
+            lastSeenISO: alert.lastSeen ? new Date(alert.lastSeen).toISOString() : null,
+        }));
+        const aggregatedAlerts = generateAlerts(metrics, health, latestCsvTimestamp).map((alert) => ({
+            ...alert,
+            firstSeenISO: alert.firstSeen ? new Date(alert.firstSeen).toISOString() : null,
+            lastSeenISO: alert.lastSeen ? new Date(alert.lastSeen).toISOString() : null,
+        }));
+        const alerts = [...rowAlerts, ...aggregatedAlerts];
         const applicationMetrics = calculateApplicationMetrics(filteredRows);
         const timeSeries = calculateTimeSeries(filteredRows);
         const healthBreakdown = applicationMetrics.reduce((accumulator, applicationMetric) => {
@@ -60,6 +76,13 @@ app.get("/api/overview", (req, res) => {
             accumulator[key] = (accumulator[key] || 0) + 1;
             return accumulator;
         }, {});
+
+        const lastUpdatedTimestamp = filteredRows.reduce((latest, row) => {
+            if (!row.timestamp) {
+                return latest;
+            }
+            return !latest || row.timestamp > latest ? row.timestamp : latest;
+        }, null);
 
         res.json({
             metrics,
@@ -73,6 +96,7 @@ app.get("/api/overview", (req, res) => {
             healthStatuses,
             applicationMetrics,
             timeSeries,
+            lastUpdated: lastUpdatedTimestamp ? lastUpdatedTimestamp.toISOString() : null,
             healthBreakdown,
             healthChartData: [
                 { name: "Healthy", value: healthBreakdown.healthy || 0, color: "#10b981" },
@@ -104,8 +128,12 @@ app.get("/api/alerts", (req, res) => {
     }
 });
 
-const PORT = 5000;
+const PORT = Number(process.env.PORT) || 5000;
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app;

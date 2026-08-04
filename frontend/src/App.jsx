@@ -9,7 +9,8 @@ import PerformanceChart from './components/PerformanceChart'
 import StatusPieChart from './components/StatusPieChart'
 import BarChart from './components/BarChart'
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://pulse-board-project01-1.onrender.com'
+const localApiUrl = 'http://localhost:5000'
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? localApiUrl : 'https://pulse-board-project01-1.onrender.com')
 const buildApiUrl = (path) => `${apiBaseUrl}${path}`
 
 const KPI_CONFIG = [
@@ -63,13 +64,7 @@ const FALLBACK_OVERVIEW_DATA = {
     availabilityStatus: 'Healthy',
     errorStatus: 'Warning',
   },
-  alerts: [
-    {
-      severity: 'Warning',
-      metric: 'Error Rate',
-      message: 'Error rate has exceeded the acceptable threshold.',
-    },
-  ],
+  alerts: [],
   applications: ['Flipkart', 'Swiggy', 'Blinkit', 'Payment Gateway', 'Order Service'],
   applicationMetrics: [
     {
@@ -122,16 +117,17 @@ function App() {
   const [statusMessage, setStatusMessage] = useState('')
   const [selectedApplication, setSelectedApplication] = useState('All')
   const [selectedRegion, setSelectedRegion] = useState('All')
+  const [selectedEnvironment, setSelectedEnvironment] = useState('All')
   const [selectedTimeRange, setSelectedTimeRange] = useState('Last 30 Days')
-  const [currentTime, setCurrentTime] = useState(new Date())
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 1000)
-
-    return () => clearInterval(intervalId)
-  }, [])
+  const formatUpdatedAt = (isoString) => {
+    if (!isoString) return 'Unknown'
+    try {
+      return new Date(isoString).toLocaleString()
+    } catch (error) {
+      return isoString
+    }
+  }
 
   useEffect(() => {
     let isMounted = true
@@ -143,7 +139,7 @@ function App() {
         setStatusMessage('')
 
         const response = await fetch(
-          buildApiUrl(`/api/overview?application=${encodeURIComponent(selectedApplication)}&region=${encodeURIComponent(selectedRegion)}&timeRange=${encodeURIComponent(selectedTimeRange)}`)
+          buildApiUrl(`/api/overview?application=${encodeURIComponent(selectedApplication)}&region=${encodeURIComponent(selectedRegion)}&environment=${encodeURIComponent(selectedEnvironment)}&timeRange=${encodeURIComponent(selectedTimeRange)}`)
         )
 
         if (!response.ok) {
@@ -174,7 +170,7 @@ function App() {
     return () => {
       isMounted = false
     }
-  }, [selectedApplication, selectedRegion, selectedTimeRange])
+  }, [selectedApplication, selectedRegion, selectedEnvironment, selectedTimeRange])
 
   const summaryRows = useMemo(() => {
     if (!data?.metrics || !data?.health) {
@@ -251,6 +247,20 @@ function App() {
     return data.timeSeries
   }, [data])
 
+  const activeAlerts = useMemo(() => {
+    if (!data?.alerts?.length) return []
+
+    const severityPriority = {
+      Critical: 0,
+      Warning: 1,
+      Unknown: 2,
+    }
+
+    return [...data.alerts].sort(
+      (a, b) => (severityPriority[a.severity] ?? 3) - (severityPriority[b.severity] ?? 3)
+    )
+  }, [data])
+
   const healthChartData = useMemo(() => {
     if (!data?.healthChartData?.length) {
       return []
@@ -270,21 +280,21 @@ function App() {
         <FilterBar
           applications={data?.applications || []}
           regions={data?.regions || []}
+          environments={data?.environments || []}
           selectedApplication={selectedApplication}
           selectedRegion={selectedRegion}
+          selectedEnvironment={selectedEnvironment}
           selectedTimeRange={selectedTimeRange}
           onApplicationChange={setSelectedApplication}
           onRegionChange={setSelectedRegion}
+          onEnvironmentChange={setSelectedEnvironment}
           onTimeRangeChange={setSelectedTimeRange}
         />
 
         <section className="hero-card">
           <div>
-            <p className="eyebrow">Live monitoring overview</p>
             <h1>PulseBoard APM</h1>
-            <p className="hero-copy">
-              Track service health, performance trends, and active incidents with enterprise-grade visibility.
-            </p>
+            <p className="hero-copy">Track service health & performance trends</p>
             {statusMessage ? <p className="status-banner">{statusMessage}</p> : null}
           </div>
           <div className="hero-stats">
@@ -307,7 +317,7 @@ function App() {
             <div>
               <span className="stat-label">Dashboard Timeframe</span>
               <strong>{selectedTimeRange}</strong>
-              <p className="muted">Updated {currentTime.toLocaleTimeString()}</p>
+              <p className="muted">Updated {formatUpdatedAt(data?.lastUpdated)}</p>
             </div>
           </div>
         </section>
@@ -354,7 +364,7 @@ function App() {
 
         <section className="content-grid">
           <SummaryTable rows={summaryRows} />
-          <AlertTable alerts={data?.alerts || []} />
+          <AlertTable alerts={activeAlerts} />
         </section>
       </main>
     </div>

@@ -48,6 +48,49 @@ function generateAlerts(metrics, health) {
     return alerts;
 }
 
+function generateRowAlerts(rows) {
+    const alertGroups = new Map();
+
+    rows.forEach((row) => {
+        const severity = row.Severity || row.Health_Status;
+
+        if (!severity || severity === "Info" || severity === "Healthy") {
+            return;
+        }
+
+        const application = row.Application || "Unknown application";
+        const event = row.Event || "Service health issue";
+        const key = `${severity}|${application}|${event}`;
+        const timestamp = row.timestamp instanceof Date ? row.timestamp : null;
+        const existing = alertGroups.get(key);
+
+        if (existing) {
+            existing.count += 1;
+            if (timestamp && (!existing.firstSeen || timestamp < existing.firstSeen)) {
+                existing.firstSeen = timestamp;
+            }
+            if (timestamp && (!existing.lastSeen || timestamp > existing.lastSeen)) {
+                existing.lastSeen = timestamp;
+            }
+            return;
+        }
+
+        alertGroups.set(key, {
+            severity,
+            metric: application,
+            message: event,
+            firstSeen: timestamp,
+            lastSeen: timestamp,
+            count: 1,
+        });
+    });
+
+    return [...alertGroups.values()]
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 50);
+}
+
 module.exports = {
-    generateAlerts
+    generateAlerts,
+    generateRowAlerts
 };

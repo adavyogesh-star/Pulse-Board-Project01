@@ -19,7 +19,30 @@ function loadCSV() {
         skipEmptyLines: true
     });
 
-    return result.data;
+    return result.data.map((row) => ({
+        ...row,
+        timestamp: parseTimestamp(row.Timestamp)
+    }));
+}
+
+function parseTimestamp(timestampString) {
+    if (!timestampString || typeof timestampString !== "string") {
+        return null;
+    }
+
+    const [datePart, timePart] = timestampString.split(" ");
+    if (!datePart || !timePart) {
+        return null;
+    }
+
+    const [day, month, year] = datePart.split("-").map(Number);
+    const [hour, minute] = timePart.split(":").map(Number);
+
+    if ([day, month, year, hour, minute].some((value) => Number.isNaN(value))) {
+        return null;
+    }
+
+    return new Date(year, month - 1, day, hour, minute);
 }
 
 function filterRowsByApplication(rows, application) {

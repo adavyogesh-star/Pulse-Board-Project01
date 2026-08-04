@@ -1,4 +1,12 @@
 {
+  "name": "pulse-board-project",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "test": "npm --prefix backend test",
+    "build:frontend": "npm --prefix frontend run build",
+    "ci": "npm run test && npm run build:frontend"
+  },
   "dependencies": {
     "csv-parser": "^3.2.1",
     "lucide-react": "^1.22.0",

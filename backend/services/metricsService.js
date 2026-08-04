@@ -175,7 +175,11 @@ function calculateTimeSeries(data) {
         return points;
     }
 
-    const sorted = [...data].sort((a, b) => Number(a.Timestamp) - Number(b.Timestamp));
+    const sorted = [...data].sort((a, b) => {
+        const aTime = a.timestamp instanceof Date ? a.timestamp.getTime() : NaN;
+        const bTime = b.timestamp instanceof Date ? b.timestamp.getTime() : NaN;
+        return aTime - bTime;
+    });
     const bucketCount = 12;
     const bucketSize = Math.max(1, Math.floor(sorted.length / bucketCount));
 
@@ -194,8 +198,19 @@ function calculateTimeSeries(data) {
         const availability = average(slice, "Availability_%");
         const errors = average(slice, "Error_Rate_%");
 
+        // compute average timestamp for the bucket (if available) and include it
+        const timestamps = slice
+            .map(r => (r.timestamp instanceof Date ? r.timestamp.getTime() : null))
+            .filter(t => t != null);
+
+        const bucketTimestamp = timestamps.length > 0
+            ? Math.round(timestamps.reduce((s, t) => s + t, 0) / timestamps.length)
+            : null;
+
         points.push({
-            label: `T${index + 1}`,
+            label: bucketTimestamp ? new Date(bucketTimestamp).toISOString() : `T${index + 1}`,
+            timestamp: bucketTimestamp,
+            timestampISO: bucketTimestamp ? new Date(bucketTimestamp).toISOString() : null,
             response,
             cpu,
             memory,

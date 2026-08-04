@@ -1,11 +1,14 @@
 function FilterBar({
   applications,
   regions,
+  environments,
   selectedApplication,
   selectedRegion,
+  selectedEnvironment,
   selectedTimeRange,
   onApplicationChange,
   onRegionChange,
+  onEnvironmentChange,
   onTimeRangeChange,
 }) {
   return (
@@ -37,6 +40,22 @@ function FilterBar({
           {regions.map((region) => (
             <option key={region} value={region}>
               {region}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor="environment-filter">Environment</label>
+        <select
+          id="environment-filter"
+          value={selectedEnvironment}
+          onChange={(event) => onEnvironmentChange(event.target.value)}
+        >
+          <option value="All">All Environments</option>
+          {environments.map((environment) => (
+            <option key={environment} value={environment}>
+              {environment}
             </option>
           ))}
         </select>
